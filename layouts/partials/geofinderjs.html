@@ -1,0 +1,122 @@
+{{ $pages := where (site.Pages.ByWeight) "Draft" false }}
+{{ $geoPages := slice }}
+
+{{ range $pages }}
+  {{ if and (isset .Params "geo_lat") (isset .Params "geo_lng") }}
+    {{ $pageData := dict "title" .Title "url" .RelPermalink "lat" .Params.geo_lat "lng" .Params.geo_lng }}
+    {{ $geoPages = $geoPages | append $pageData }}
+  {{ end }}
+{{ end }}
+
+{{ $geofinderData := dict "pages" $geoPages "maxDistance" .maxDistance }}
+{{ $geofinderJSON := $geofinderData | jsonify }}
+
+
+<script>
+  // Geofinder JavaScript functionality
+  window.GeoFinder = window.GeoFinder || {};
+  
+  // Initialize GeoFinder with data
+  window.GeoFinder.init = function(geofinderData) {
+    this.geoPagesData = geofinderData.pages;
+    this.maxDistance = geofinderData.maxDistance;
+  };
+  
+  // Calculate distance between two points using Haversine formula (in meters)
+  window.GeoFinder.calculateDistance = function(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
+  // Find the closest page to a given position
+  window.GeoFinder.findClosestPage = function(position) {
+    const userLat = position.coords.latitude;
+    const userLng = position.coords.longitude;
+    
+    let closestPage = null;
+    let minDistance = Infinity;
+    
+    for (const page of this.geoPagesData) {
+      const distance = this.calculateDistance(userLat, userLng, page.lat, page.lng);
+      
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPage = page;
+      }
+    }
+    
+    return { page: closestPage, distance: minDistance };
+  };
+
+  // Handle geolocation search
+  window.GeoFinder.searchLocation = function(statusElementId) {
+    const statusElement = document.getElementById(statusElementId);
+    statusElement.textContent = 'Bestimme deine Position...';
+    
+    if (!navigator.geolocation) {
+      statusElement.textContent = 'Geolocation wird von deinem Browser nicht unterstützt';
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      // Success callback
+      (position) => {
+        const result = this.findClosestPage(position);
+        
+        if (result.page) {
+          if (result.distance <= this.maxDistance) {
+            statusElement.textContent = `Standort innerhalb von ${Math.round(result.distance)} Metern gefunden! Weiterleitung zu ${result.page.title}...`;
+            // Redirect to the closest page
+            setTimeout(() => {
+              window.location.href = result.page.url;
+            }, 1000);
+          } else {
+            statusElement.textContent = `Der nächste Standort ist ${result.page.title}, aber er ist ${Math.round(result.distance)} Meter entfernt (mehr als ${this.maxDistance}m).`;
+          }
+        } else {
+          statusElement.textContent = 'Keine Standorte in der Datenbank gefunden.';
+        }
+      },
+      // Error callback
+      (error) => {
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            statusElement.textContent = 'Benutzer hat die Anfrage für Geolocation verweigert.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            statusElement.textContent = 'Standortinformationen sind nicht verfügbar.';
+            break;
+          case error.TIMEOUT:
+            statusElement.textContent = 'Die Anfrage zur Standortbestimmung ist abgelaufen.';
+            break;
+          case error.UNKNOWN_ERROR:
+            statusElement.textContent = 'Ein unbekannter Fehler ist aufgetreten.';
+            break;
+        }
+      },
+      // Options
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
+  };
+
+  // Initialize GeoFinder with Hugo-generated data
+  document.addEventListener('DOMContentLoaded', function() {
+    const geofinderData = JSON.parse('{{ $geofinderJSON | safeJS }}');
+    window.GeoFinder.init(geofinderData);
+    
+  });  
+</script>
