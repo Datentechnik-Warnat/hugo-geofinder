@@ -1,0 +1,344 @@
+{{/*
+  Geofinder Footer Partial
+  This partial includes the floating geofinder button on all pages
+  by including the geofinder_floating shortcode content directly
+*/}}
+
+{{ $maxDistance := .Site.Params.geofinder.maxDistance }}
+{{ if not $maxDistance }}
+  {{ $maxDistance = 100 }}
+{{ end }}
+
+{{ $tooltipText := .Site.Params.geofinder.floatingButtonTooltip }}
+{{ if not $tooltipText }}
+  {{ $tooltipText = "Suche an aktuellem Standort" }}
+{{ end }}
+
+{{ $mobileFooter := .Site.Params.geofinder.mobileFooter }}
+{{ if eq $mobileFooter "" }}
+  {{ $mobileFooter = false }}
+{{ end }}
+
+<!-- Include shared JavaScript functionality -->
+{{ partial "geofinderjs.html" (dict "context" . "maxDistance" $maxDistance) }}
+
+<script>
+  // Initialize GeoFinder with Hugo-generated data
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Handle mobile footer body padding
+    const mobileFooterEnabled = {{ if $mobileFooter }}true{{ else }}false{{ end }};
+    if (mobileFooterEnabled) {
+      function adjustBodyPadding() {
+        if (window.innerWidth <= 768) {
+          document.body.style.paddingBottom = '60px';
+        } else {
+          document.body.style.paddingBottom = '';
+        }
+      }
+      
+      // Initial adjustment
+      adjustBodyPadding();
+      
+      // Adjust on window resize
+      window.addEventListener('resize', adjustBodyPadding);
+    }
+    
+    // Attach event listener to the floating button
+    document.getElementById('floatingGeoBtn').addEventListener('click', function() {
+      // Show status popup
+      const statusPopup = document.getElementById('geoStatusPopup');
+      statusPopup.style.display = 'block';
+      
+      window.GeoFinder.searchLocation('geoStatusText');
+    });
+    
+    // Close popup when clicking the close button
+    document.getElementById('closeStatusPopup').addEventListener('click', function() {
+      document.getElementById('geoStatusPopup').style.display = 'none';
+    });
+    
+    // Close popup when clicking outside of it
+    document.getElementById('geoStatusPopup').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.style.display = 'none';
+      }
+    });
+  });
+</script>
+
+<!-- Floating Button -->
+<div id="floatingGeoBtn" class="floating-geo-btn{{ if $mobileFooter }} mobile-footer-enabled{{ end }}" data-mobile-footer="{{ $mobileFooter }}">
+  <div class="floating-geo-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="floating-geo-text">{{ $tooltipText }}</div>
+</div>
+
+<!-- Status Popup -->
+<div id="geoStatusPopup" class="geo-status-popup">
+  <div class="geo-status-content">
+    <div class="geo-status-header">
+      <h3>Standortsuche</h3>
+      <button id="closeStatusPopup" class="close-btn">&times;</button>
+    </div>
+    <div id="geoStatusText" class="geo-status-text">Bereit für Standortsuche...</div>
+  </div>
+</div>
+
+<style>
+  .floating-geo-btn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    border: none;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .floating-geo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+  
+  .floating-geo-text {
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 0;
+    max-width: 0;
+    overflow: hidden;
+  }
+  
+  .floating-geo-btn:hover {
+    background-color: #0069d9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+    width: auto;
+    min-width: 200px;
+    padding: 0 20px 0 15px;
+  }
+  
+  .floating-geo-btn:hover .floating-geo-icon {
+    margin-right: 10px;
+  }
+  
+  .floating-geo-btn:hover .floating-geo-text {
+    opacity: 1;
+    transform: translateX(0);
+    max-width: 200px;
+    margin-left: 0;
+  }
+  
+  .floating-geo-btn:active {
+    transform: translateY(0);
+    background-color: #0056b3;
+  }
+  
+  .geo-status-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .geo-status-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+    max-width: 90vw;
+    animation: slideIn 0.3s ease;
+  }
+  
+  .geo-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 10px 20px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .geo-status-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+  }
+  
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+  
+  .close-btn:hover {
+    background-color: #f5f5f5;
+    color: #333;
+  }
+  
+  .geo-status-text {
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+    min-height: 20px;
+    line-height: 1.5;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -60%);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  }
+  
+  /* Mobile Footer Mode */
+  @media (max-width: 768px) {
+    .floating-geo-btn.mobile-footer-enabled {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 60px;
+      border-radius: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      justify-content: flex-start;
+      padding: 0 20px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled .floating-geo-icon {
+      margin-right: 15px;
+      flex-shrink: 0;
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled .floating-geo-text {
+      opacity: 1;
+      transform: translateX(0);
+      max-width: none;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled:hover {
+      width: 100%;
+      min-width: auto;
+      padding: 0 20px;
+      transform: none;
+      box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled:hover .floating-geo-icon {
+      margin-right: 15px;
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled:active {
+      transform: none;
+      background-color: #0056b3;
+    }
+  }
+  
+  /* Default Mobile responsiveness (when mobile footer is disabled) */
+  @media (max-width: 768px) {
+    .floating-geo-btn:not(.mobile-footer-enabled) {
+      right: 15px;
+      bottom: 15px;
+      width: 50px;
+      height: 50px;
+      border-radius: 25px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled):hover {
+      min-width: 180px;
+      padding: 0 15px 0 12px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-icon {
+      margin-right: 8px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text {
+      font-size: 13px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text {
+      max-width: 150px;
+    }
+    
+    .geo-status-content {
+      min-width: 280px;
+      margin: 20px;
+    }
+  }
+  
+  /* Extra small screens (default mode only) */
+  @media (max-width: 480px) {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover {
+      min-width: 160px;
+      padding: 0 12px 0 10px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text {
+      font-size: 12px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text {
+      max-width: 130px;
+    }
+  }
+  
+  /* Ensure body has bottom padding when mobile footer is enabled */
+  @media (max-width: 768px) {
+    .mobile-footer-enabled ~ * {
+      padding-bottom: 60px;
+    }
+  }
+</style>

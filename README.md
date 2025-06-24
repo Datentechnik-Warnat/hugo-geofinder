@@ -49,6 +49,13 @@ oder mit benutzerdefinierter maximaler Entfernung:
 {{< geofinder-floating distance="200" >}}
 ```
 
+### Globale Integration
+
+Um den Floating Button auf alle Seiten der Page zu integrieren, kann folgender Abschnitt in das baseof.html integriert werden:   
+```markdown
+{{ partial "geofinder-footer.html" . }}
+```
+
 ## Konfiguration
 
 ### Seiten-Parameter
