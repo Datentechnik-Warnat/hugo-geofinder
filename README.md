@@ -105,3 +105,8 @@ params:
 - Moderne Browser mit Geolocation-API-Unterstützung
 - HTTPS erforderlich für Geolocation in den meisten Browsern
 - Mobile Browser vollständig unterstützt
+
+## Disclaimer
+
+Dieses Projekt wurde durch Implementation von KI unterstützt.  
+Eingesetzte Codes wurden manuell geprüft.  
