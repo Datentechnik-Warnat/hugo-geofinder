@@ -1,0 +1,56 @@
+{{- $geo_lat := .Page.Params.geo_lat -}}
+{{- $geo_lng := .Page.Params.geo_lng -}}
+{{- if and $geo_lat $geo_lng -}}
+<div class="geofinder-routing">
+  <!-- Mobile Navigation Button -->
+  <a href="geo:{{ $geo_lat }},{{ $geo_lng }}" class="geofinder-nav-mobile">Navigation starten</a>
+  
+  <!-- Desktop Navigation Button -->
+  <a href="https://www.google.com/maps/search/?api=1&query={{ $geo_lat }},{{ $geo_lng }}" class="geofinder-nav-desktop" target="_blank" rel="noopener">Navigation starten</a>
+</div>
+
+<style>
+  .geofinder-routing {
+    margin: 1rem 0;
+  }
+  
+  .geofinder-nav-mobile,
+  .geofinder-nav-desktop {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+  }
+  
+  .geofinder-nav-mobile:hover,
+  .geofinder-nav-desktop:hover {
+    background-color: #0056b3;
+    color: white;
+    text-decoration: none;
+  }
+  
+  /* Show mobile button on mobile devices */
+  .geofinder-nav-mobile {
+    display: none;
+  }
+  
+  .geofinder-nav-desktop {
+    display: inline-block;
+  }
+  
+  /* Media query for mobile devices */
+  @media (max-width: 768px) {
+    .geofinder-nav-mobile {
+      display: inline-block;
+    }
+    
+    .geofinder-nav-desktop {
+      display: none;
+    }
+  }
+</style>
+{{- end -}}
