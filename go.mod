@@ -1,3 +1,3 @@
-module github.com/swarnat/hugo-geofinder
+module github.com/Datentechnik-Warnat/hugo-geofinder
 
 go 1.23.5
