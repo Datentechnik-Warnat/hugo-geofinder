@@ -4,6 +4,10 @@
   by including the geofinder_floating shortcode content directly
 */}}
 
+{{ $mobileRouting := .Site.Params.geofinder.mobileRouting }}
+{{ $geo_lat := .Page.Params.geo_lat }}
+{{ $geo_lng := .Page.Params.geo_lng }}
+
 {{ $maxDistance := .Site.Params.geofinder.maxDistance }}
 {{ if not $maxDistance }}
   {{ $maxDistance = 100 }}
@@ -53,6 +57,26 @@
       window.GeoFinder.searchLocation('geoStatusText');
     });
     
+    {{ if and $mobileRouting $geo_lat $geo_lng }}
+    // Attach event listener to the routing button
+    const routingBtn = document.getElementById('floatingRoutingBtn');
+    if (routingBtn) {
+      routingBtn.addEventListener('click', function() {
+        const isMobile = window.innerWidth <= 768;
+        const lat = {{ $geo_lat }};
+        const lng = {{ $geo_lng }};
+        
+        if (isMobile) {
+          // Use Apple Maps on mobile
+          window.location.href = `https://maps.apple.com/?daddr=${lat},${lng}`;
+        } else {
+          // Use Google Maps on desktop
+          window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank', 'noopener');
+        }
+      });
+    }
+    {{ end }}
+    
     // Close popup when clicking the close button
     document.getElementById('closeStatusPopup').addEventListener('click', function() {
       document.getElementById('geoStatusPopup').style.display = 'none';
@@ -67,14 +91,30 @@
   });
 </script>
 
-<!-- Floating Button -->
-<div id="floatingGeoBtn" class="floating-geo-btn{{ if $mobileFooter }} mobile-footer-enabled{{ end }}" data-mobile-footer="{{ $mobileFooter }}">
-  <div class="floating-geo-icon">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
-    </svg>
+<!-- Floating Buttons Container -->
+<div class="floating-buttons-container{{ if $mobileFooter }} mobile-footer-enabled{{ end }}{{ if and $mobileRouting $geo_lat $geo_lng }} has-routing-btn{{ end }}">
+  <!-- Main Geofinder Button -->
+  <div id="floatingGeoBtn" class="floating-geo-btn{{ if $mobileFooter }} mobile-footer-enabled{{ end }}" data-mobile-footer="{{ $mobileFooter }}">
+    <div class="floating-geo-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="floating-geo-text">{{ $tooltipText }}</div>
   </div>
-  <div class="floating-geo-text">{{ $tooltipText }}</div>
+  
+  {{ if and $mobileRouting $geo_lat $geo_lng }}
+  <!-- Routing Button -->
+  <div id="floatingRoutingBtn" class="floating-routing-btn{{ if $mobileFooter }} mobile-footer-enabled{{ end }}" data-mobile-footer="{{ $mobileFooter }}">
+    <div class="floating-routing-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="currentColor"/>
+        <path d="M12 16L13.09 22.26L22 23L13.09 23.74L12 30L10.91 23.74L2 23L10.91 22.26L12 16Z" fill="currentColor" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="floating-routing-text">Navigiere zum Ziel</div>
+  </div>
+  {{ end }}
 </div>
 
 <!-- Status Popup -->
@@ -89,10 +129,24 @@
 </div>
 
 <style>
-  .floating-geo-btn {
+  .floating-buttons-container {
     position: fixed;
     right: 20px;
     bottom: 20px;
+    z-index: 1000;
+    width: 60px;
+    height: 60px;
+  }
+  
+  /* When both buttons are present */
+  .floating-buttons-container.has-routing-btn {
+    height: 135px;
+  }
+  
+  .floating-geo-btn,
+  .floating-routing-btn {
+    position: absolute;
+    right: 0;
     width: 60px;
     height: 60px;
     background-color: #007bff;
@@ -104,13 +158,24 @@
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
     border: none;
     overflow: hidden;
     white-space: nowrap;
+    bottom: 0;
   }
   
-  .floating-geo-icon {
+  /* When both buttons are present, geofinder goes to top */
+  .floating-buttons-container.has-routing-btn .floating-geo-btn {
+    bottom: 75px;
+  }
+  
+  .floating-routing-btn {
+    background-color: #28a745;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+  
+  .floating-geo-icon,
+  .floating-routing-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -118,7 +183,8 @@
     flex-shrink: 0;
   }
   
-  .floating-geo-text {
+  .floating-geo-text,
+  .floating-routing-text {
     opacity: 0;
     transform: translateX(10px);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -133,16 +199,27 @@
     background-color: #0069d9;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
-    width: auto;
-    min-width: 200px;
+    width: 200px;
+    right: 0;
     padding: 0 20px 0 15px;
   }
   
-  .floating-geo-btn:hover .floating-geo-icon {
+  .floating-routing-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    width: 200px;
+    right: 0;
+    padding: 0 20px 0 15px;
+  }
+  
+  .floating-geo-btn:hover .floating-geo-icon,
+  .floating-routing-btn:hover .floating-routing-icon {
     margin-right: 10px;
   }
   
-  .floating-geo-btn:hover .floating-geo-text {
+  .floating-geo-btn:hover .floating-geo-text,
+  .floating-routing-btn:hover .floating-routing-text {
     opacity: 1;
     transform: translateX(0);
     max-width: 200px;
@@ -152,6 +229,11 @@
   .floating-geo-btn:active {
     transform: translateY(0);
     background-color: #0056b3;
+  }
+  
+  .floating-routing-btn:active {
+    transform: translateY(0);
+    background-color: #1e7e34;
   }
   
   .geo-status-popup {
@@ -241,12 +323,22 @@
   
   /* Mobile Footer Mode */
   @media (max-width: 768px) {
-    .floating-geo-btn.mobile-footer-enabled {
+    .floating-buttons-container.mobile-footer-enabled {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
       width: 100%;
+      height: 60px;
+      flex-direction: row;
+      gap: 0;
+      z-index: 1000;
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled,
+    .floating-routing-btn.mobile-footer-enabled {
+      position: relative;
+      width: 50%;
       height: 60px;
       border-radius: 0;
       border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -255,12 +347,18 @@
       box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     }
     
-    .floating-geo-btn.mobile-footer-enabled .floating-geo-icon {
+    .floating-routing-btn.mobile-footer-enabled {
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .floating-geo-btn.mobile-footer-enabled .floating-geo-icon,
+    .floating-routing-btn.mobile-footer-enabled .floating-routing-icon {
       margin-right: 15px;
       flex-shrink: 0;
     }
     
-    .floating-geo-btn.mobile-footer-enabled .floating-geo-text {
+    .floating-geo-btn.mobile-footer-enabled .floating-geo-text,
+    .floating-routing-btn.mobile-footer-enabled .floating-routing-text {
       opacity: 1;
       transform: translateX(0);
       max-width: none;
@@ -268,15 +366,17 @@
       font-weight: 500;
     }
     
-    .floating-geo-btn.mobile-footer-enabled:hover {
-      width: 100%;
+    .floating-geo-btn.mobile-footer-enabled:hover,
+    .floating-routing-btn.mobile-footer-enabled:hover {
+      width: 50%;
       min-width: auto;
       padding: 0 20px;
       transform: none;
       box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.15);
     }
     
-    .floating-geo-btn.mobile-footer-enabled:hover .floating-geo-icon {
+    .floating-geo-btn.mobile-footer-enabled:hover .floating-geo-icon,
+    .floating-routing-btn.mobile-footer-enabled:hover .floating-routing-icon {
       margin-right: 15px;
     }
     
@@ -284,32 +384,46 @@
       transform: none;
       background-color: #0056b3;
     }
+    
+    .floating-routing-btn.mobile-footer-enabled:active {
+      transform: none;
+      background-color: #1e7e34;
+    }
   }
   
   /* Default Mobile responsiveness (when mobile footer is disabled) */
   @media (max-width: 768px) {
-    .floating-geo-btn:not(.mobile-footer-enabled) {
+    .floating-buttons-container:not(.mobile-footer-enabled) {
       right: 15px;
       bottom: 15px;
+      gap: 10px;
+    }
+    
+    .floating-geo-btn:not(.mobile-footer-enabled),
+    .floating-routing-btn:not(.mobile-footer-enabled) {
       width: 50px;
       height: 50px;
       border-radius: 25px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled):hover {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover,
+    .floating-routing-btn:not(.mobile-footer-enabled):hover {
       min-width: 180px;
       padding: 0 15px 0 12px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-icon {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-icon,
+    .floating-routing-btn:not(.mobile-footer-enabled):hover .floating-routing-icon {
       margin-right: 8px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text {
+    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text,
+    .floating-routing-btn:not(.mobile-footer-enabled) .floating-routing-text {
       font-size: 13px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text,
+    .floating-routing-btn:not(.mobile-footer-enabled):hover .floating-routing-text {
       max-width: 150px;
     }
     
@@ -321,16 +435,19 @@
   
   /* Extra small screens (default mode only) */
   @media (max-width: 480px) {
-    .floating-geo-btn:not(.mobile-footer-enabled):hover {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover,
+    .floating-routing-btn:not(.mobile-footer-enabled):hover {
       min-width: 160px;
       padding: 0 12px 0 10px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text {
+    .floating-geo-btn:not(.mobile-footer-enabled) .floating-geo-text,
+    .floating-routing-btn:not(.mobile-footer-enabled) .floating-routing-text {
       font-size: 12px;
     }
     
-    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text {
+    .floating-geo-btn:not(.mobile-footer-enabled):hover .floating-geo-text,
+    .floating-routing-btn:not(.mobile-footer-enabled):hover .floating-routing-text {
       max-width: 130px;
     }
   }

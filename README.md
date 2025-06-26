@@ -49,6 +49,13 @@ oder mit benutzerdefinierter maximaler Entfernung:
 {{< geofinder-floating distance="200" >}}
 ```
 
+### Routing
+
+Das Routing zur Position dieser Adresse kann als Button mit folgemde
+```markdown
+{{< geofinder_routing >}}
+```
+
 ### Globale Integration
 
 Um den Floating Button auf alle Seiten der Page zu integrieren, kann folgender Abschnitt in das baseof.html integriert werden:   
@@ -78,6 +85,10 @@ Optional kannst du eine Standard-Entfernung in deiner `config.yaml` festlegen:
 params:
   geofinder:
     maxDistance: 100  # in Metern
+    floatingButtonTooltip: "Suche an aktuellem Standort"
+    mobileFooter: true # Soll auf mobilgeräten ein Localisation Button sichtbar sein
+    mobileRouting: true # Soll ein Routing angeboten werden
+
 ```
 
 ## Funktionalität
