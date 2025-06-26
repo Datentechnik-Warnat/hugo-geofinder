@@ -3,7 +3,7 @@
 {{- if and $geo_lat $geo_lng -}}
 <div class="geofinder-routing">
   <!-- Mobile Navigation Button -->
-  <a href="geo:{{ $geo_lat }},{{ $geo_lng }}" class="geofinder-nav-mobile">Navigation starten</a>
+  <a href="https://maps.apple.com/?daddr={{ $geo_lat }},{{ $geo_lng }}" class="geofinder-nav-mobile">Navigation starten</a>
   
   <!-- Desktop Navigation Button -->
   <a href="https://www.google.com/maps/search/?api=1&query={{ $geo_lat }},{{ $geo_lng }}" class="geofinder-nav-desktop" target="_blank" rel="noopener">Navigation starten</a>
